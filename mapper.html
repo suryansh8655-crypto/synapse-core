@@ -9,6 +9,10 @@
     <input type="file" id="f" accept=".json">
     <p id="status">Upload your playlist.json to start mapping...</p>
 
+    <div style="margin-top: 20px;">
+        <a href="index.html" style="color: #444; text-decoration: none; font-family: monospace; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;">// Return to Core Node</a>
+    </div>
+
     <script>
     document.getElementById('f').addEventListener('change', async (e) => {
         let songs = JSON.parse(await e.target.files[0].text());
@@ -37,6 +41,6 @@
         a.click();
         status.innerText = "Complete! Check your new playlist.json for the 'youtubeId' fields.";
     });
-</script>
+    </script>
 </body>
 </html>
