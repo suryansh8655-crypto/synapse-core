@@ -306,25 +306,38 @@ class SynapseCore {
     }
 
     executeTrack(track) {
-        this.artistCooldown.push(track.artist);
-        this.genreCooldown.push(track.genre);
+    this.artistCooldown.push(track.artist);
+    this.genreCooldown.push(track.genre);
 
-        if (this.artistCooldown.length > this.cooldownDepth) this.artistCooldown.shift();
-        if (this.genreCooldown.length > this.cooldownDepth) this.genreCooldown.shift();
-
-        document.getElementById('trackTitle').innerText = track.title;
-        document.getElementById('trackArtist').innerText = track.artist;
-        document.getElementById('trackGenre').innerText = track.genre;
-
-        this.deployAdFreeStream(track.title, track.artist);
+    if (this.artistCooldown.length > this.cooldownDepth) {
+        this.artistCooldown.shift();
     }
 
-    deployAdFreeStream(title, artist) {
-        const query = encodeURIComponent(`${title} ${artist} audio`);
-        const cleanPlayerUrl = `https://www.youtube-nocookie.com/embed?listType=search&list=${query}&autoplay=1&modestbranding=1&rel=0&iv_load_policy=3`;
-        document.getElementById('isolatedAudioStream').src = cleanPlayerUrl;
-        this.log(`Clean stream mounted into core dashboard: "${title}"`);
+    if (this.genreCooldown.length > this.cooldownDepth) {
+        this.genreCooldown.shift();
     }
+
+    document.getElementById('trackTitle').innerText = track.title;
+    document.getElementById('trackArtist').innerText = track.artist;
+    document.getElementById('trackGenre').innerText = track.genre;
+
+    this.deployAdFreeStream(track.youtubeId);
+}
+
+    deployAdFreeStream(videoId) {
+    if (!videoId || videoId.trim() === "") {
+        this.log("No YouTube ID available for this track.");
+        document.getElementById('isolatedAudioStream').src = "";
+        return;
+    }
+
+    const cleanPlayerUrl =
+        `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
+
+    document.getElementById('isolatedAudioStream').src = cleanPlayerUrl;
+
+    this.log(`Clean stream mounted: ${videoId}`);
+}
 
     log(message) {
         const output = document.getElementById('logOutput');
