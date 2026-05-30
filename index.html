@@ -320,7 +320,7 @@ class SynapseCore {
     document.getElementById('trackTitle').innerText = track.title;
     document.getElementById('trackArtist').innerText = track.artist;
     document.getElementById('trackGenre').innerText = track.genre;
-
+console.log("TRACK:", track);
     this.deployAdFreeStream(track.youtubeId);
 }
 
