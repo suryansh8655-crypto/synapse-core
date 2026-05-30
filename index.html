@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYNAPSE // Ad-Free Isolated Media Core</title>
+    <style>
+        :root {
+            --bg-color: #08080a;
+            --accent-color: #00ff66;
+            --text-color: #ffffff;
+            --card-bg: #111114;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            color: var(--accent-color);
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(0, 255, 102, 0.2);
+        }
+
+        .subtitle {
+            color: #555;
+            margin-bottom: 30px;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .weather-panel {
+            background: #16161a;
+            border: 1px solid #222;
+            padding: 12px 20px;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-bottom: 25px;
+        }
+
+        .weather-status {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .drop-zone {
+            border: 2px dashed #333;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 25px;
+        }
+
+        .drop-zone:hover {
+            border-color: var(--accent-color);
+            background: #141418;
+        }
+
+        .player-card {
+            background: var(--card-bg);
+            border: 1px solid #222;
+            border-radius: 16px;
+            padding: 35px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+
+        .track-title {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .track-artist {
+            font-size: 1.1rem;
+            color: #888;
+            margin-bottom: 15px;
+        }
+
+        .track-genre {
+            display: inline-block;
+            font-size: 0.75rem;
+            color: var(--accent-color);
+            background: rgba(0, 255, 102, 0.08);
+            padding: 4px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 25px;
+        }
+
+        .media-bay {
+            width: 100%;
+            height: 240px;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #232326;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .media-bay iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        button {
+            background: none;
+            border: 2px solid #fff;
+            color: #fff;
+            padding: 12px 28px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background: #fff;
+            color: var(--bg-color);
+        }
+
+        button.primary {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        button.primary:hover {
+            background: var(--accent-color);
+            color: var(--bg-color);
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.3);
+        }
+
+        .log-panel {
+            margin-top: 30px;
+            background: #0c0c0f;
+            border: 1px solid #151518;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: left;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .log-title {
+            font-size: 0.75rem;
+            color: #444;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .log-line {
+            font-size: 0.8rem;
+            color: #666;
+            margin: 4px 0;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Synapse</h1>
+    <div class="subtitle">Ad-Free Localized Stream Node</div>
+
+    <div class="weather-panel">
+        <span class="weather-status" id="weatherDisplay">Calibrating Atmosphere...</span>
+    </div>
+
+    <div class="drop-zone" id="dropZone">
+        <p style="margin: 0; font-size: 0.95rem; color: #ccc;">⚡ Click or Drag your <b>playlist.json</b> here to initialize memory.</p>
+        <input type="file" id="fileInput" style="display: none;" accept=".json">
+    </div>
+
+    <div class="player-card">
+        <div class="track-title" id="trackTitle">System Core Ready</div>
+        <div class="track-artist" id="trackArtist">Feed playlist.json to trigger acoustic pathways</div>
+        <div><span class="track-genre" id="trackGenre">Awaiting Sync</span></div>
+
+        <div class="media-bay">
+            <iframe id="isolatedAudioStream" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>
+
+        <div class="controls">
+            <button onclick="engine.skipVibe()">Skip Bias</button>
+            <button class="primary" onclick="engine.triggerSynapse()">Next Synapse</button>
+        </div>
+    </div>
+
+    <div class="log-panel">
+        <div class="log-title">Engine Computational Log</div>
+        <div id="logOutput"></div>
+    </div>
+</div>
+
+<script>
+class SynapseCore {
+    constructor() {
+        this.masterPool = [];
+        this.artistCooldown = [];
+        this.genreCooldown = [];
+        this.cooldownDepth = 5; 
+        this.weatherBias = { targetGenre: null, multiplier: 1.0 };
+    }
+
+    setWeatherMatrix(condition) {
+        condition = condition.toLowerCase();
+        let target = "";
+        
+        if (condition.includes("rain") || condition.includes("drizzle") || condition.includes("thunderstorm")) {
+            target = "Indie/Dream Pop";
+            this.weatherBias = { targetGenre: target, multiplier: 2.5 };
+        } else if (condition.includes("clear") || condition.includes("sunny")) {
+            target = "Pop";
+            this.weatherBias = { targetGenre: target, multiplier: 2.0 };
+        } else if (condition.includes("haze") || condition.includes("mist") || condition.includes("smoke")) {
+            target = "Indie Alternative";
+            this.weatherBias = { targetGenre: target, multiplier: 2.2 };
+        } else {
+            this.weatherBias = { targetGenre: null, multiplier: 1.0 };
+        }
+        this.log(`Atmosphere engine matrix calibrated successfully.`);
+    }
+
+    loadData(songs) {
+        this.masterPool = songs;
+        this.log(`Linked ${this.masterPool.length} metadata targets inside local memory.`);
+        this.triggerSynapse();
+    }
+
+    triggerSynapse() {
+        if (this.masterPool.length === 0) return;
+
+        let selectedTrack = null;
+        let highestWeight = -1;
+
+        for (let i = 0; i < this.masterPool.length; i++) {
+            let track = this.masterPool[i];
+            let computationalWeight = Math.random();
+
+            if (this.artistCooldown.includes(track.artist)) computationalWeight *= 0.02;
+            if (this.genreCooldown.includes(track.genre)) computationalWeight *= 0.15;
+
+            if (this.weatherBias.targetGenre && track.genre === this.weatherBias.targetGenre) {
+                computationalWeight *= this.weatherBias.multiplier;
+            }
+
+            if (computationalWeight > highestWeight) {
+                highestWeight = computationalWeight;
+                selectedTrack = track;
+            }
+        }
+
+        if (selectedTrack) {
+            this.executeTrack(selectedTrack);
+        }
+    }
+
+    skipVibe() {
+        this.triggerSynapse();
+    }
+
+    executeTrack(track) {
+        this.artistCooldown.push(track.artist);
+        this.genreCooldown.push(track.genre);
+
+        if (this.artistCooldown.length > this.cooldownDepth) this.artistCooldown.shift();
+        if (this.genreCooldown.length > this.cooldownDepth) this.genreCooldown.shift();
+
+        document.getElementById('trackTitle').innerText = track.title;
+        document.getElementById('trackArtist').innerText = track.artist;
+        document.getElementById('trackGenre').innerText = track.genre;
+
+        this.deployAdFreeStream(track.title, track.artist);
+    }
+
+    deployAdFreeStream(title, artist) {
+        const query = encodeURIComponent(`${title} ${artist} audio`);
+        const cleanPlayerUrl = `https://www.youtube-nocookie.com/embed?listType=search&list=${query}&autoplay=1&modestbranding=1&rel=0&iv_load_policy=3`;
+        document.getElementById('isolatedAudioStream').src = cleanPlayerUrl;
+        this.log(`Clean stream mounted into core dashboard: "${title}"`);
+    }
+
+    log(message) {
+        const output = document.getElementById('logOutput');
+        const timestamp = new Date().toLocaleTimeString();
+        output.innerHTML = `<div class="log-line">[${timestamp}] ${message}</div>` + output.innerHTML;
+    }
+}
+
+const engine = new SynapseCore();
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', (e) => loadPlaylistFile(e.target.files[0]));
+
+function loadPlaylistFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+            engine.loadData(data);
+        } catch (err) {
+            alert("File system indexing failure.");
+        }
+    };
+    reader.readAsText(file);
+}
+
+// IP-based weather detection for any location
+async function syncLocalAtmosphere() {
+    try {
+        const res = await fetch('https://wttr.in/?format=j1');
+        const data = await res.json();
+        const currentCondition = data.current_condition[0].weatherDesc[0].value;
+        const temp = data.current_condition[0].temp_C;
+
+        document.getElementById('weatherDisplay').innerText = `${currentCondition}, ${temp}°C`;
+        engine.setWeatherMatrix(currentCondition);
+    } catch (error) {
+        document.getElementById('weatherDisplay').innerText = "System Operational";
+        engine.setWeatherMatrix("Clear");
+    }
+}
+
+syncLocalAtmosphere();
+</script>
+</body>
+</html>
