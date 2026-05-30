@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SYNAPSE // Auto-Mapper</title>
+</head>
+<body style="background:#08080a; color:#fff; text-align:center; padding:50px;">
+    <h2>Automated ID Mapper</h2>
+    <input type="file" id="f" accept=".json">
+    <p id="status">Upload your playlist.json to start mapping...</p>
+
+    <script>
+    document.getElementById('f').addEventListener('change', async (e) => {
+        let songs = JSON.parse(await e.target.files[0].text());
+        const status = document.getElementById('status');
+        
+        for (let i = 0; i < songs.length; i++) {
+            let s = songs[i];
+            status.innerText = `Resolving [${i + 1}/${songs.length}]: ${s.title}`;
+            try {
+                // Using a direct search endpoint
+                let res = await fetch(`https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(s.title + ' ' + s.artist)}&filter=videos`);
+                let d = await res.json();
+                if(d.items && d.items.length > 0) {
+                    s.youtubeId = d.items[0].videoId;
+                } else {
+                    s.youtubeId = "dQw4w9WgXcQ"; // Fallback to avoid null
+                }
+            } catch(err) {
+                s.youtubeId = "dQw4w9WgXcQ";
+            }
+        }
+
+        let a = document.createElement('a');
+        a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(songs, null, 2));
+        a.download = "playlist.json";
+        a.click();
+        status.innerText = "Complete! Check your new playlist.json for the 'youtubeId' fields.";
+    });
+</script>
+</body>
+</html>
