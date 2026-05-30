@@ -15,31 +15,73 @@
 
     <script>
     document.getElementById('f').addEventListener('change', async (e) => {
-        let songs = JSON.parse(await e.target.files[0].text());
+        const file = e.target.files[0];
+        if (!file) return;
+
+        let songs;
+        try {
+            songs = JSON.parse(await file.text());
+        } catch (err) {
+            document.getElementById('status').innerText =
+                "Invalid playlist.json";
+            return;
+        }
+
         const status = document.getElementById('status');
-        
+
         for (let i = 0; i < songs.length; i++) {
-            let s = songs[i];
-            status.innerText = `Resolving [${i + 1}/${songs.length}]: ${s.title}`;
+            const s = songs[i];
+
+            status.innerText =
+                `Resolving [${i + 1}/${songs.length}]: ${s.title}`;
+
             try {
-                // Using a direct search endpoint
-                let res = await fetch(`https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(s.title + ' ' + s.artist)}&filter=videos`);
-                let d = await res.json();
-                if(d.items && d.items.length > 0) {
-                    s.youtubeId = d.items[0].videoId;
-                } else {
-                    s.youtubeId = "dQw4w9WgXcQ"; // Fallback to avoid null
+                const query = encodeURIComponent(
+                    `${s.title} ${s.artist}`
+                );
+
+                const res = await fetch(
+                    `https://inv.nadeko.net/api/v1/search?q=${query}&type=video`
+                );
+
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
                 }
-            } catch(err) {
-                s.youtubeId = "dQw4w9WgXcQ";
+
+                const results = await res.json();
+
+                if (
+                    Array.isArray(results) &&
+                    results.length > 0 &&
+                    results[0].videoId
+                ) {
+                    s.youtubeId = results[0].videoId;
+                } else {
+                    s.youtubeId = "";
+                    console.warn(`No result found for: ${s.title}`);
+                }
+
+            } catch (err) {
+                console.error(
+                    `Failed to resolve "${s.title}"`,
+                    err
+                );
+                s.youtubeId = "";
             }
         }
 
-        let a = document.createElement('a');
-        a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(songs, null, 2));
-        a.download = "playlist.json";
-        a.click();
-        status.innerText = "Complete! Check your new playlist.json for the 'youtubeId' fields.";
+        const downloadLink = document.createElement('a');
+        downloadLink.href =
+            "data:text/json;charset=utf-8," +
+            encodeURIComponent(
+                JSON.stringify(songs, null, 2)
+            );
+
+        downloadLink.download = "playlist.json";
+        downloadLink.click();
+
+        status.innerText =
+            "Complete! New playlist.json downloaded with YouTube IDs.";
     });
     </script>
 </body>
