@@ -332,7 +332,7 @@ console.log("TRACK:", track);
     }
 
     const cleanPlayerUrl =
-        `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
+    `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&origin=${window.location.origin}`;
 
     document.getElementById('isolatedAudioStream').src = cleanPlayerUrl;
 
