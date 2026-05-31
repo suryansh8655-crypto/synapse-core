@@ -37,8 +37,8 @@
 
             try {
                 const query = encodeURIComponent(
-                    `${s.title} ${s.artist}`
-                );
+    `${s.title} ${s.artist} audio`
+);
 
                 const res = await fetch(
                     `https://inv.nadeko.net/api/v1/search?q=${query}&type=video`
@@ -49,7 +49,8 @@
                 }
 
                 const results = await res.json();
-
+console.log(results);
+alert(JSON.stringify(results).slice(0, 500));
                 if (
                     Array.isArray(results) &&
                     results.length > 0 &&
