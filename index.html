@@ -197,16 +197,6 @@
 <div class="container">
     <h1>Synapse</h1>
     <div class="subtitle">Ad-Free Localized Stream Node</div>
-    <div class="log-panel">
-        <div class="log-title">Engine Computational Log</div>
-        <div id="logOutput"></div>
-    </div>
-
-    <div style="margin-top: 20px; text-align: center;">
-        <a href="mapper.html" style="color: #444; text-decoration: none; font-family: monospace; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;">// Initialize Mapper Node</a>
-    </div>
-</div>
-    
 
     <div class="weather-panel">
         <span class="weather-status" id="weatherDisplay">Calibrating Atmosphere...</span>
@@ -264,12 +254,12 @@ class SynapseCore {
         } else {
             this.weatherBias = { targetGenre: null, multiplier: 1.0 };
         }
-        this.log(`Atmosphere engine matrix calibrated successfully.`);
+        this.log("Atmosphere engine matrix calibrated successfully.");
     }
 
     loadData(songs) {
         this.masterPool = songs;
-        this.log(`Linked ${this.masterPool.length} metadata targets inside local memory.`);
+        this.log(`Linked ${this.masterPool.length} targets inside memory core.`);
         this.triggerSynapse();
     }
 
@@ -305,39 +295,69 @@ class SynapseCore {
         this.triggerSynapse();
     }
 
-    executeTrack(track) {
-    this.artistCooldown.push(track.artist);
-    this.genreCooldown.push(track.genre);
+    async executeTrack(track) {
+        document.getElementById('trackTitle').innerText = track.title;
+        document.getElementById('trackArtist').innerText = track.artist;
+        document.getElementById('trackGenre').innerText = track.genre;
+        
+        this.log(`Deep-scraping engine layout for: "${track.title}"...`);
 
-    if (this.artistCooldown.length > this.cooldownDepth) {
-        this.artistCooldown.shift();
+        const resolvedId = await this.scrapeVideoIdMatrix(track.title, track.artist);
+
+        if (resolvedId) {
+            const cleanPlayerUrl = `https://www.youtube.com/embed/${resolvedId}?autoplay=1&rel=0&modestbranding=1`;
+            document.getElementById('isolatedAudioStream').src = cleanPlayerUrl;
+            this.log(`Stream online. Path mounted: ${resolvedId}`);
+
+            this.artistCooldown.push(track.artist);
+            this.genreCooldown.push(track.genre);
+            if (this.artistCooldown.length > this.cooldownDepth) this.artistCooldown.shift();
+            if (this.genreCooldown.length > this.cooldownDepth) this.genreCooldown.shift();
+        } else {
+            this.log(`Matrix blindspot for "${track.title}". Re-routing line parameters...`);
+            setTimeout(() => this.triggerSynapse(), 1500);
+        }
     }
 
-    if (this.genreCooldown.length > this.cooldownDepth) {
-        this.genreCooldown.shift();
+    // Direct search data layout analyzer
+    async scrapeVideoIdMatrix(title, artist) {
+        const cleanQuery = encodeURIComponent(`${title} ${artist} audio`);
+        const targetSearchUrl = `https://www.youtube.com/results?search_query=${cleanQuery}`;
+        
+        const proxyLines = [
+            `https://corsproxy.io/?${encodeURIComponent(targetSearchUrl)}`,
+            `https://api.allorigins.win/get?url=${encodeURIComponent(targetSearchUrl)}`
+        ];
+
+        for (let proxyUrl of proxyLines) {
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 3000);
+                const res = await fetch(proxyUrl, { signal: controller.signal });
+                clearTimeout(timeout);
+
+                if (!res.ok) continue;
+
+                let rawHtml = "";
+                if (proxyUrl.includes("allorigins")) {
+                    const wrappedData = await res.json();
+                    rawHtml = wrappedData.contents;
+                } else {
+                    rawHtml = await res.text();
+                }
+
+                // Scan the raw DOM string for the very first native JSON videoId token
+                const patternMatch = rawHtml.match(/"videoId"\s*:\s*"([a-zA-Z0-9_-]{11})"/);
+                
+                if (patternMatch && patternMatch[1]) {
+                    return patternMatch[1]; 
+                }
+            } catch (fail) {
+                // Connection line throttled, switching gateway arrays...
+            }
+        }
+        return null;
     }
-
-    document.getElementById('trackTitle').innerText = track.title;
-    document.getElementById('trackArtist').innerText = track.artist;
-    document.getElementById('trackGenre').innerText = track.genre;
-console.log("TRACK:", track);
-    this.deployAdFreeStream(track.youtubeId);
-}
-
-    deployAdFreeStream(videoId) {
-    if (!videoId || videoId.trim() === "") {
-        this.log("No YouTube ID available for this track.");
-        document.getElementById('isolatedAudioStream').src = "";
-        return;
-    }
-
-    const cleanPlayerUrl =
-    `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&origin=${window.location.origin}`;
-
-    document.getElementById('isolatedAudioStream').src = cleanPlayerUrl;
-
-    this.log(`Clean stream mounted: ${videoId}`);
-}
 
     log(message) {
         const output = document.getElementById('logOutput');
@@ -367,7 +387,6 @@ function loadPlaylistFile(file) {
     reader.readAsText(file);
 }
 
-// IP-based weather detection for any location
 async function syncLocalAtmosphere() {
     try {
         const res = await fetch('https://wttr.in/?format=j1');
