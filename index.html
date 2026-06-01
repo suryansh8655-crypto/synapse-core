@@ -125,7 +125,8 @@
             position: relative;
         }
 
-        .media-bay iframe {
+        /* Targets both the initial div and the converted iframe */
+        .media-bay iframe, .media-bay div {
             width: 100%;
             height: 100%;
             border: none;
@@ -213,7 +214,7 @@
         <div><span class="track-genre" id="trackGenre">Awaiting Sync</span></div>
 
         <div class="media-bay">
-            <iframe id="isolatedAudioStream" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            <div id="isolatedAudioStream"></div>
         </div>
 
         <div class="controls">
@@ -228,6 +229,8 @@
     </div>
 </div>
 
+<script src="https://www.youtube.com/iframe_api"></script>
+
 <script>
 class SynapseCore {
     constructor() {
@@ -236,6 +239,7 @@ class SynapseCore {
         this.genreCooldown = [];
         this.cooldownDepth = 5; 
         this.weatherBias = { targetGenre: null, multiplier: 1.0 };
+        this.playerNode = null; // Holds live stream instance
     }
 
     setWeatherMatrix(condition) {
@@ -300,61 +304,83 @@ class SynapseCore {
         document.getElementById('trackArtist').innerText = track.artist;
         document.getElementById('trackGenre').innerText = track.genre;
         
-        this.log(`Deep-scraping engine layout for: "${track.title}"...`);
+        this.log(`Flanking firewalls. Resolving path for: "${track.title}"...`);
 
+        // Pivot to DuckDuckGo flank extraction matrix
         const resolvedId = await this.scrapeVideoIdMatrix(track.title, track.artist);
 
         if (resolvedId) {
-            const cleanPlayerUrl = `https://www.youtube.com/embed/${resolvedId}?autoplay=1&rel=0&modestbranding=1`;
-            document.getElementById('isolatedAudioStream').src = cleanPlayerUrl;
-            this.log(`Stream online. Path mounted: ${resolvedId}`);
+            this.log(`Stream linked successfully. Mounting Node: ${resolvedId}`);
+
+            // Initialize or load the track into the native automated player instance
+            if (!this.playerNode && typeof YT !== 'undefined' && YT.Player) {
+                this.playerNode = new YT.Player('isolatedAudioStream', {
+                    videoId: resolvedId,
+                    playerVars: {
+                        'autoplay': 1,
+                        'rel': 0,
+                        'modestbranding': 1,
+                        'controls': 1
+                    },
+                    events: {
+                        'onStateChange': (event) => this.handlePlayerStateChange(event),
+                        'onError': () => {
+                            this.log("Playback blocked on current node. Rerouting...");
+                            this.triggerSynapse();
+                        }
+                    }
+                });
+            } else if (this.playerNode) {
+                this.playerNode.loadVideoById(resolvedId);
+            }
 
             this.artistCooldown.push(track.artist);
             this.genreCooldown.push(track.genre);
             if (this.artistCooldown.length > this.cooldownDepth) this.artistCooldown.shift();
             if (this.genreCooldown.length > this.cooldownDepth) this.genreCooldown.shift();
         } else {
-            this.log(`Matrix blindspot for "${track.title}". Re-routing line parameters...`);
-            setTimeout(() => this.triggerSynapse(), 1500);
+            this.log(`Matrix blindspot for "${track.title}". Re-routing parameters...`);
+            setTimeout(() => this.triggerSynapse(), 1000);
         }
     }
 
-    // Direct search data layout analyzer
+    // Listens for structural stream state alerts
+    handlePlayerStateChange(event) {
+        // YT.PlayerState.ENDED equals structural state 0
+        if (event.data === 0) {
+            this.log("Acoustic cycle complete. Auto-triggering next synapse sequence.");
+            this.triggerSynapse();
+        }
+    }
+
+    // Proxy-friendly, non-JS flanking search crawler (DuckDuckGo engine)
     async scrapeVideoIdMatrix(title, artist) {
-        const cleanQuery = encodeURIComponent(`${title} ${artist} audio`);
-        const targetSearchUrl = `https://www.youtube.com/results?search_query=${cleanQuery}`;
-        
-        const proxyLines = [
-            `https://corsproxy.io/?${encodeURIComponent(targetSearchUrl)}`,
-            `https://api.allorigins.win/get?url=${encodeURIComponent(targetSearchUrl)}`
-        ];
+        const cleanQuery = encodeURIComponent(`site:youtube.com ${title} ${artist} audio`);
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(`https://html.duckduckgo.com/html/?q=${cleanQuery}`)}`;
 
-        for (let proxyUrl of proxyLines) {
-            try {
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 3000);
-                const res = await fetch(proxyUrl, { signal: controller.signal });
-                clearTimeout(timeout);
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 4000);
+            const res = await fetch(proxyUrl, { signal: controller.signal });
+            clearTimeout(timeout);
 
-                if (!res.ok) continue;
+            if (!res.ok) return null;
 
-                let rawHtml = "";
-                if (proxyUrl.includes("allorigins")) {
-                    const wrappedData = await res.json();
-                    rawHtml = wrappedData.contents;
-                } else {
-                    rawHtml = await res.text();
-                }
-
-                // Scan the raw DOM string for the very first native JSON videoId token
-                const patternMatch = rawHtml.match(/"videoId"\s*:\s*"([a-zA-Z0-9_-]{11})"/);
-                
-                if (patternMatch && patternMatch[1]) {
-                    return patternMatch[1]; 
-                }
-            } catch (fail) {
-                // Connection line throttled, switching gateway arrays...
+            const rawHtml = await res.text();
+            
+            // Extract the standard tracking wrappers out of DDG static source layouts
+            const patternMatch = rawHtml.match(/watch%3Fv%3D([a-zA-Z0-9_-]{11})/);
+            if (patternMatch && patternMatch[1]) {
+                return patternMatch[1];
             }
+            
+            const fallbackMatch = rawHtml.match(/v=([a-zA-Z0-9_-]{11})/);
+            if (fallbackMatch && fallbackMatch[1]) {
+                return fallbackMatch[1];
+            }
+
+        } catch (fail) {
+            // Connection line bottleneck
         }
         return null;
     }
@@ -369,6 +395,11 @@ class SynapseCore {
 const engine = new SynapseCore();
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
+
+// Mandatory global registration callback hook required by YouTube's API module
+window.onYouTubeIframeAPIReady = () => {
+    engine.log("YouTube Player Framework API online and listening.");
+};
 
 dropZone.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', (e) => loadPlaylistFile(e.target.files[0]));
