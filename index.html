@@ -303,7 +303,7 @@ class SynapseCore {
         document.getElementById('trackArtist').innerText = track.artist;
         document.getElementById('trackGenre').innerText = track.genre;
         
-        this.log(`Resolving stream parameters for: "${track.title}"...`);
+        this.log(`Querying open API matrix for: "${track.title}"...`);
 
         const resolvedId = await this.scrapeVideoIdMatrix(track.title, track.artist);
 
@@ -337,7 +337,7 @@ class SynapseCore {
             if (this.genreCooldown.length > this.cooldownDepth) this.genreCooldown.shift();
         } else {
             this.log(`Matrix blindspot for "${track.title}". Rerouting logic arrays...`);
-            setTimeout(() => this.triggerSynapse(), 2000);
+            setTimeout(() => this.triggerSynapse(), 1500);
         }
     }
 
@@ -348,63 +348,37 @@ class SynapseCore {
         }
     }
 
-    // High-resilience, Multi-Proxy Mobile Extraction Protocol
+    // Proxy-Free Decentralized Invidious JSON Discovery Array
     async scrapeVideoIdMatrix(title, artist) {
         const cleanQuery = encodeURIComponent(`${title} ${artist} audio`);
         
-        // Strategy layers combining lightweight YouTube interfaces across active proxy relays
-        const paths = [
-            {
-                endpoint: `https://m.youtube.com/results?search_query=${cleanQuery}`,
-                proxy: (target) => `https://corsproxy.io/?${encodeURIComponent(target)}`,
-                wrapped: false
-            },
-            {
-                endpoint: `https://m.youtube.com/results?search_query=${cleanQuery}`,
-                proxy: (target) => `https://api.allorigins.win/get?url=${encodeURIComponent(target)}`,
-                wrapped: true
-            },
-            {
-                endpoint: `https://www.youtube.com/results?search_query=${cleanQuery}`,
-                proxy: (target) => `https://corsproxy.io/?${encodeURIComponent(target)}`,
-                wrapped: false
-            }
+        // Highly resilient public nodes providing open CORS-enabled search processing
+        const nodes = [
+            `https://yewtu.be/api/v1/search?q=${cleanQuery}&type=video`,
+            `https://inv.nadeko.net/api/v1/search?q=${cleanQuery}&type=video`,
+            `https://invidious.nerdvpn.de/api/v1/search?q=${cleanQuery}&type=video`
         ];
 
-        for (let route of paths) {
+        for (let targetNode of nodes) {
             try {
-                const proxyUrl = route.proxy(route.endpoint);
                 const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 3500);
-                const res = await fetch(proxyUrl, { signal: controller.signal });
+                const timeout = setTimeout(() => controller.abort(), 3000);
+                const res = await fetch(targetNode, { signal: controller.signal });
                 clearTimeout(timeout);
 
                 if (!res.ok) continue;
 
-                let HTML = "";
-                if (route.wrapped) {
-                    const json = await res.json();
-                    HTML = json.contents;
-                } else {
-                    HTML = await res.text();
+                const searchDataset = await res.json();
+                
+                if (searchDataset && searchDataset.length > 0) {
+                    // Pull the structural videoId directly out of the matched search dataset
+                    const verifiedTrack = searchDataset.find(item => item.videoId);
+                    if (verifiedTrack) {
+                        return verifiedTrack.videoId;
+                    }
                 }
-
-                if (!HTML || HTML.length < 400) continue;
-
-                // Match Tier 1: Inline Native Client JSON video IDs
-                const matchJSON = HTML.match(/"videoId"\s*:\s*"([a-zA-Z0-9_-]{11})"/);
-                if (matchJSON && matchJSON[1]) return matchJSON[1];
-
-                // Match Tier 2: Mobile Interface Standard Hyperlink paths
-                const matchStandard = HTML.match(/watch\?v=([a-zA-Z0-9_-]{11})/);
-                if (matchStandard && matchStandard[1]) return matchStandard[1];
-
-                // Match Tier 3: Escaped/URL Encoded script targets
-                const matchEncoded = HTML.match(/watch%3Fv%3D([a-zA-Z0-9_-]{11})/);
-                if (matchEncoded && matchEncoded[1]) return matchEncoded[1];
-
             } catch (fail) {
-                // Route congested, switching channel lines...
+                // Node congested or timed out, skipping to redundant gateway...
             }
         }
         return null;
