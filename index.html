@@ -125,7 +125,6 @@
             position: relative;
         }
 
-        /* Targets both the initial div and the converted iframe */
         .media-bay iframe, .media-bay div {
             width: 100%;
             height: 100%;
@@ -239,7 +238,7 @@ class SynapseCore {
         this.genreCooldown = [];
         this.cooldownDepth = 5; 
         this.weatherBias = { targetGenre: null, multiplier: 1.0 };
-        this.playerNode = null; // Holds live stream instance
+        this.playerNode = null;
     }
 
     setWeatherMatrix(condition) {
@@ -304,15 +303,13 @@ class SynapseCore {
         document.getElementById('trackArtist').innerText = track.artist;
         document.getElementById('trackGenre').innerText = track.genre;
         
-        this.log(`Flanking firewalls. Resolving path for: "${track.title}"...`);
+        this.log(`Resolving stream parameters for: "${track.title}"...`);
 
-        // Pivot to DuckDuckGo flank extraction matrix
         const resolvedId = await this.scrapeVideoIdMatrix(track.title, track.artist);
 
         if (resolvedId) {
-            this.log(`Stream linked successfully. Mounting Node: ${resolvedId}`);
+            this.log(`Core sync successful. Mounting Node: ${resolvedId}`);
 
-            // Initialize or load the track into the native automated player instance
             if (!this.playerNode && typeof YT !== 'undefined' && YT.Player) {
                 this.playerNode = new YT.Player('isolatedAudioStream', {
                     videoId: resolvedId,
@@ -325,7 +322,7 @@ class SynapseCore {
                     events: {
                         'onStateChange': (event) => this.handlePlayerStateChange(event),
                         'onError': () => {
-                            this.log("Playback blocked on current node. Rerouting...");
+                            this.log("Playback footprint rejected by node. Resetting matrix...");
                             this.triggerSynapse();
                         }
                     }
@@ -339,48 +336,76 @@ class SynapseCore {
             if (this.artistCooldown.length > this.cooldownDepth) this.artistCooldown.shift();
             if (this.genreCooldown.length > this.cooldownDepth) this.genreCooldown.shift();
         } else {
-            this.log(`Matrix blindspot for "${track.title}". Re-routing parameters...`);
-            setTimeout(() => this.triggerSynapse(), 1000);
+            this.log(`Matrix blindspot for "${track.title}". Rerouting logic arrays...`);
+            setTimeout(() => this.triggerSynapse(), 2000);
         }
     }
 
-    // Listens for structural stream state alerts
     handlePlayerStateChange(event) {
-        // YT.PlayerState.ENDED equals structural state 0
         if (event.data === 0) {
-            this.log("Acoustic cycle complete. Auto-triggering next synapse sequence.");
+            this.log("Stream terminus reached. Advancing to next track link.");
             this.triggerSynapse();
         }
     }
 
-    // Proxy-friendly, non-JS flanking search crawler (DuckDuckGo engine)
+    // High-resilience, Multi-Proxy Mobile Extraction Protocol
     async scrapeVideoIdMatrix(title, artist) {
-        const cleanQuery = encodeURIComponent(`site:youtube.com ${title} ${artist} audio`);
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(`https://html.duckduckgo.com/html/?q=${cleanQuery}`)}`;
-
-        try {
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 4000);
-            const res = await fetch(proxyUrl, { signal: controller.signal });
-            clearTimeout(timeout);
-
-            if (!res.ok) return null;
-
-            const rawHtml = await res.text();
-            
-            // Extract the standard tracking wrappers out of DDG static source layouts
-            const patternMatch = rawHtml.match(/watch%3Fv%3D([a-zA-Z0-9_-]{11})/);
-            if (patternMatch && patternMatch[1]) {
-                return patternMatch[1];
+        const cleanQuery = encodeURIComponent(`${title} ${artist} audio`);
+        
+        // Strategy layers combining lightweight YouTube interfaces across active proxy relays
+        const paths = [
+            {
+                endpoint: `https://m.youtube.com/results?search_query=${cleanQuery}`,
+                proxy: (target) => `https://corsproxy.io/?${encodeURIComponent(target)}`,
+                wrapped: false
+            },
+            {
+                endpoint: `https://m.youtube.com/results?search_query=${cleanQuery}`,
+                proxy: (target) => `https://api.allorigins.win/get?url=${encodeURIComponent(target)}`,
+                wrapped: true
+            },
+            {
+                endpoint: `https://www.youtube.com/results?search_query=${cleanQuery}`,
+                proxy: (target) => `https://corsproxy.io/?${encodeURIComponent(target)}`,
+                wrapped: false
             }
-            
-            const fallbackMatch = rawHtml.match(/v=([a-zA-Z0-9_-]{11})/);
-            if (fallbackMatch && fallbackMatch[1]) {
-                return fallbackMatch[1];
-            }
+        ];
 
-        } catch (fail) {
-            // Connection line bottleneck
+        for (let route of paths) {
+            try {
+                const proxyUrl = route.proxy(route.endpoint);
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 3500);
+                const res = await fetch(proxyUrl, { signal: controller.signal });
+                clearTimeout(timeout);
+
+                if (!res.ok) continue;
+
+                let HTML = "";
+                if (route.wrapped) {
+                    const json = await res.json();
+                    HTML = json.contents;
+                } else {
+                    HTML = await res.text();
+                }
+
+                if (!HTML || HTML.length < 400) continue;
+
+                // Match Tier 1: Inline Native Client JSON video IDs
+                const matchJSON = HTML.match(/"videoId"\s*:\s*"([a-zA-Z0-9_-]{11})"/);
+                if (matchJSON && matchJSON[1]) return matchJSON[1];
+
+                // Match Tier 2: Mobile Interface Standard Hyperlink paths
+                const matchStandard = HTML.match(/watch\?v=([a-zA-Z0-9_-]{11})/);
+                if (matchStandard && matchStandard[1]) return matchStandard[1];
+
+                // Match Tier 3: Escaped/URL Encoded script targets
+                const matchEncoded = HTML.match(/watch%3Fv%3D([a-zA-Z0-9_-]{11})/);
+                if (matchEncoded && matchEncoded[1]) return matchEncoded[1];
+
+            } catch (fail) {
+                // Route congested, switching channel lines...
+            }
         }
         return null;
     }
@@ -396,7 +421,6 @@ const engine = new SynapseCore();
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 
-// Mandatory global registration callback hook required by YouTube's API module
 window.onYouTubeIframeAPIReady = () => {
     engine.log("YouTube Player Framework API online and listening.");
 };
